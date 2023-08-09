@@ -1,15 +1,13 @@
 # importing render and redirect
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-
-from .secret_key import API_KEY
-# importing the openai API
 import openai
 import os
-# import the generated API key from the secret_key file
+from dotenv import load_dotenv
 
-# loading the API key from the secret_key file
-openai.api_key = API_KEY
+load_dotenv()
+# loading the API key from the .env file
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 # this is the home view for handling home page logic
 
 def upload(request):
