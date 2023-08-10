@@ -1,5 +1,5 @@
 """
-WSGI config for song_maker project.
+WSGI config for ASR project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

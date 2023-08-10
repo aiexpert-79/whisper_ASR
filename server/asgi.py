@@ -1,5 +1,5 @@
 """
-ASGI config for song_maker project.
+ASGI config for ASR project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'song_maker.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ASR.settings')
 
 application = get_asgi_application()

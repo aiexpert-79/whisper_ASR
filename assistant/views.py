@@ -35,115 +35,41 @@ def home(request):
     try:
         # if the session does not have a messages key, create one
         if 'messages' not in request.session:
-            request.session['messages'] = [
-                
-            ]
+            request.session['messages'] = [{
+                "role":"system",
+                "content":"You're an a AI assistant that replies to all my questions in markdown format."
+            }]
         if request.method == 'POST':
             # get the prompt from the form
-            str1= "Here is who I am.'"
-            auth= request.POST.get('author')
-            bio= request.POST.get('bio')
-            mission= request.POST.get('mission')
+            question= request.POST.get('question')
+            print("xxx", question)
             temperature = float(request.POST.get('temperature', 0.1))
 
-            prompt="Here is who I am.'"+bio
-            request.session['messages'].append({"role": "user", "content": prompt})
+            request.session['messages'].append({"role": "user", "content": question})
+            
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=request.session['messages'],
-                temperature=temperature,
-                max_tokens=1000
-            )
+                model = "gpt-3.5-turbo", 
+                messages = request.session['messages'], 
+                temperature=0.1,
+                max_tokens=1000,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0
+                )
             # format the response
-            formatted_response = response['choices'][0]['message']['content']
+            reply = response['choices'][0]['message']['content']
             # append the response to the messages list
-            request.session['messages'].append({"role": "assistant", "content": formatted_response})
+            request.session['messages'].append({"role": "assistant", "content": reply})
             print(request.session['messages'])
             print("------------------------------------------")
-
-            prompt="I am actually struggling with"+mission
-            request.session['messages'].append({"role": "user", "content": prompt})
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=request.session['messages'],
-                temperature=temperature,
-                max_tokens=1000
-            )
-            # format the response
-            formatted_response = response['choices'][0]['message']['content']
-            # append the response to the messages list
-            request.session['messages'].append({"role": "assistant", "content": formatted_response})
-            print(request.session['messages'])
-            print("------------------------------------------")
-
-            prompt = "Can you be more specific? Can you give me more variety of examples?"
-            request.session['messages'].append({"role": "user", "content": prompt})
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=request.session['messages'],
-                temperature=temperature,
-                max_tokens=1000
-            )
-            # format the response
-            formatted_response = response['choices'][0]['message']['content']
-            # append the response to the messages list
-            request.session['messages'].append({"role": "assistant", "content": formatted_response})
-            print(request.session['messages'])
-            print("------------------------------------------")
-
-            prompt = "Can you put it in a song? Make lyrics to the song which has the title of this or written by this man'"+auth+"'.Also somehow tie christianity and jesus to this. I really want to connect closer to god."
-            request.session['messages'].append({"role": "user", "content": prompt})
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=request.session['messages'],
-                temperature=temperature,
-                max_tokens=1000
-            )
-            # format the response
-            formatted_response = response['choices'][0]['message']['content']
-            # append the response to the messages list
-            request.session['messages'].append({"role": "assistant", "content": formatted_response})
-            print(request.session['messages'])
-            print("------------------------------------------")
-
-            prompt = "please include my bio and what my struggle is into the lyrics"
-            request.session['messages'].append({"role": "user", "content": prompt})
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=request.session['messages'],
-                temperature=temperature,
-                max_tokens=1000
-            )
-            # format the response
-            formatted_response = response['choices'][0]['message']['content']
-            # append the response to the messages list
-            request.session['messages'].append({"role": "assistant", "content": formatted_response})
-            print(request.session['messages'])
-            print("------------------------------------------")
-
-            prompt = "can you make this more modern too?"
-            request.session['messages'].append({"role": "user", "content": prompt})
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=request.session['messages'],
-                temperature=temperature,
-                max_tokens=1000
-            )
-            # format the response
-            formatted_response = response['choices'][0]['message']['content']
-            request.session['messages'].append({"role": "assistant", "content": formatted_response})
-            result=formatted_response
-            # append the response to the messages list
 
             request.session.modified = True
             # redirect to the home page
             context = {
                 'messages': request.session['messages'],
-                'result': result,
-                'prompt': '',
-                'author' : auth,
+                'result': reply,
+                'question' : question,
                 'input_flag' : 1,
-                'bio' :bio,
                 'temperature': temperature,
             }
             return render(request, 'assistant/home.html', context)
@@ -151,7 +77,6 @@ def home(request):
             # if the request is not a POST request, render the home page
             context = {
                 'messages': request.session['messages'],
-                'prompt': '',
                 'temperature': 0.1,
             }
             return render(request, 'assistant/home.html', context)

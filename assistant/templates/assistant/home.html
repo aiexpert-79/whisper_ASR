@@ -10,56 +10,36 @@
             <h1 class="card-header text-center">Whisper</h1>
             <div class="card-body">
               <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary mb-3" onclick="location.href='{% url 'new_chat' %}'">New chat</button>
+                <button type="button" class="btn btn-primary mb-3" onclick="location.href='{% url 'new_chat' %}'">New chat</button>
               </div>
               
               <form action="." method="POST">
                 <!-- this secures the form from malicious attacks during submission -->
                 {% csrf_token %}
+                <label for="temperature" class="form-label d-flex">Temperature: 
+                  <input class="ms-2" type="number" step="0.01" min="0" max="2" name="temperature" value="{{ temperature }}" id="temperature">
+                </label>
                 <div class="inputform" style="margin-bottom:30px;background-color: antiquewhite;padding: 10px;">
-                  <label for="author" class="form-label">What is your request?</label>
-                  <input class="form-control mb-2" type="text" name="author" value="{{ author }}" id="author">
-                  <label class="btn btn-primary mb-1" for="file-input-1" style="margin-right: 15px">
+                  <label for="question" class="form-label">What is your request?</label>
+                  <input class="form-control mb-2" type="text" name="question" value="{{ question }}" id="question">
+                  <label class="btn btn-primary mb-1" for="file-input" style="margin-right: 15px">
                     Upload File
-                    <input type="file" name="auth" id="file-input-1" style="display: none;">
+                    <input type="file" name="file" id="file-input" style="display: none;">
                   </label>
-                  <button id="auth-stop-recording"  class="btn btn-danger mb-1 float-end" disabled>Stop</button>
-                  <button id="auth-start-recording" class="btn btn-success mb-1 me-1 float-end">Start</button>
+                  <button id="start-recording" class="btn btn-primary mb-1 me-1">Start</button>
+                  <button id="stop-recording"  class="btn btn-danger mb-1" disabled>Stop</button>
+                  <button class="btn btn-success fw-bold float-end" type="submit">Send</button>
                 </div>
-                {% comment %} <div class="inputform" style="margin-bottom:30px;background-color: antiquewhite;padding: 10px;">
-                  <label for="bio" class="form-label">Bio(Who you are):</label>
-                  <input class="form-control mb-2" type="text" name="bio" value="{{ bio }}" id="bio">
-                  <label class="btn btn-primary mb-1" for="file-input-2" style="margin-right: 15px">
-                    Upload File
-                    <input type="file" id="file-input-2" name="bi" style="display: none;">
-                  </label>
-                  <button id="bio-start-recording" class="btn btn-success mb-1" >Start</button>
-                  <button id="bio-stop-recording"  class="btn btn-danger mb-1" disabled>Stop</button>
-                </div>
+
                 <div class="chat-history mb-3">
                   {% if result %}
-                      <div class="card mb-2 bg-success text-white">
+                      <div class="card mb-2 bg-secondary text-white">
                         <div class="card-body p-2">
                              {{ result|linebreaksbr }}
                         </div>
                       </div>
                   {% endif %}
                 </div>
-                <div class="inputform" style="margin-bottom:30px;background-color: antiquewhite;padding: 10px;">
-                  <label for="mission" class="form-label">What are you currently going to do:</label>
-                  <input class="form-control mb-2" type="text" name="mission" {% if input_flag %} autofocus="autofocus" {% endif %} value="{{ mission }}" id="mission">
-                  <label class="btn btn-primary mb-1" for="file-input-3" style="margin-right: 15px">
-                    Upload File
-                    <input type="file"  name="mis" id="file-input-3" style="display: none;"> 
-                  </label>
-                  <button id="mission-start-recording" class="btn btn-success mb-1" >Start</button>
-                  <button id="mission-stop-recording"  class="btn btn-danger mb-1" disabled>Stop</button>
-                </div> {% endcomment %}
-                <label for="temperature" class="form-label">Temperature:</label>
-                <input class="form-control mb-2" type="number" step="0.01" min="0" max="2" name="temperature" value="{{ temperature }}" id="temperature">
-                <button class="btn btn-success fw-bold" type="submit">
-                     GENERATE
-                </button>
               </form>
             </div>
         </div>
@@ -71,13 +51,11 @@
   let chunks = [];
   let mediaRecorder;
 
-  const authstartRecording = () => {
+  const startRecording = () => {
      if(record_flag)
       {
         alert("You forgot to finish your recording.");
-        if(record_flag==1)authstopRecording();
-        if(record_flag==2)biostopRecording();
-        if(record_flag==3)missionstopRecording();
+        if(record_flag==1)stopRecording();
       }
       record_flag =1;
       chunks = [];
@@ -89,11 +67,11 @@
           })
           .catch(error => console.error(error));
 
-      document.getElementById('auth-stop-recording').disabled = false;
-      document.getElementById('auth-start-recording').disabled = true;
+      document.getElementById('stop-recording').disabled = false;
+      document.getElementById('start-recording').disabled = true;
   };
 
-  const authstopRecording = () => {
+  const stopRecording = () => {
       record_flag =0;
       mediaRecorder.stop();
       mediaRecorder.addEventListener('stop', () => {
@@ -101,14 +79,14 @@
 
           var formData = new FormData();
           formData.append('file', blob, 'recording.mpeg');
-          formData.append('filename',"auth.mp3");
+          formData.append('filename',"record.mp3");
           var xhr = new XMLHttpRequest();
           var responseText;
           xhr.open('POST', '/upload/', true);
-          document.getElementById('author').value = "..";
+          document.getElementById('question').value = "..";
           var loadInterval= setInterval(function(){
-            document.getElementById('author').value += ".";
-          },300)
+            document.getElementById('question').value += ".";
+          },500)
 
           xhr.onreadystatechange = function() {
               if (xhr.readyState === 4 && xhr.status === 200) {
@@ -116,10 +94,10 @@
                 clearInterval(loadInterval);
                 
                 var index=0;
-                document.getElementById('author').value = "";
+                document.getElementById('question').value = "";
                 var interval = setInterval(function(){
                   if(index<responseText.length){
-                    document.getElementById('author').value +=responseText.charAt(index);
+                    document.getElementById('question').value +=responseText.charAt(index);
                     index++; 
                   }
                   else
@@ -131,256 +109,50 @@
           };
           xhr.send(formData);  
       });
-      document.getElementById('auth-stop-recording').disabled = true;
-      document.getElementById('auth-start-recording').disabled = false;
+      document.getElementById('stop-recording').disabled = true;
+      document.getElementById('start-recording').disabled = false;
   };
 
-  document.getElementById('auth-start-recording').addEventListener('click', authstartRecording);
-  document.getElementById('auth-stop-recording').addEventListener('click', authstopRecording);
-
-  const biostartRecording = () => {
-      if(record_flag)
-      {
-        alert("You forgot to finish your recording.");
-        if(record_flag==1)authstopRecording();
-        if(record_flag==2)biostopRecording();
-        if(record_flag==3)missionstopRecording();
-      }
-      record_flag =2;
-      chunks = [];
-      navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(stream => {
-              mediaRecorder = new MediaRecorder(stream);
-              mediaRecorder.addEventListener('dataavailable', event => chunks.push(event.data));
-              mediaRecorder.start();
-          })
-          .catch(error => console.error(error));
-
-      document.getElementById('bio-stop-recording').disabled = false;
-      document.getElementById('bio-start-recording').disabled = true;
-  };
-
-  const biostopRecording = () => {
-      record_flag =0;
-      mediaRecorder.stop();
-      mediaRecorder.addEventListener('stop', () => {
-          const blob = new Blob(chunks, { type: 'audio/mpeg' });
-
-          var formData = new FormData();
-          formData.append('file', blob, 'recording.mpeg');
-          formData.append('filename',"bi.mp3");
-          var xhr = new XMLHttpRequest();
-          var responseText;
-          xhr.open('POST', '/upload/', true);
-          document.getElementById('bio').value = "..";
-          var loadInterval= setInterval(function(){
-            document.getElementById('bio').value += ".";
-          },300)
-
-          xhr.onreadystatechange = function() {
-              if (xhr.readyState === 4 && xhr.status === 200) {
-                responseText = xhr.responseText;
-                clearInterval(loadInterval);
-                
-                var index=0;
-                document.getElementById('bio').value = "";
-                var interval = setInterval(function(){
-                  if(index<responseText.length){
-                    document.getElementById('bio').value +=responseText.charAt(index);
-                    index++; 
-                  }
-                  else
-                  {
-                    clearInterval(interval);
-                  }
-                },30)
-            }
-          };
-          xhr.send(formData);  
-      });
-      document.getElementById('bio-stop-recording').disabled = true;
-      document.getElementById('bio-start-recording').disabled = false;
-  };
-
-  document.getElementById('bio-start-recording').addEventListener('click', biostartRecording);
-  document.getElementById('bio-stop-recording').addEventListener('click', biostopRecording);
-
-  const missionstartRecording = () => {
-      if(record_flag)
-      {
-        alert("You forgot to finish your recording.");
-        if(record_flag==1)authstopRecording();
-        if(record_flag==2)biostopRecording();
-        if(record_flag==3)missionstopRecording();
-      }
-      record_flag =3;
-      chunks = [];
-      navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(stream => {
-              mediaRecorder = new MediaRecorder(stream);
-              mediaRecorder.addEventListener('dataavailable', event => chunks.push(event.data));
-              mediaRecorder.start();
-          })
-          .catch(error => console.error(error));
-
-      document.getElementById('mission-stop-recording').disabled = false;
-      document.getElementById('mission-start-recording').disabled = true;
-  };
-
-  const missionstopRecording = () => {
-      record_flag =0;
-      mediaRecorder.stop();
-      mediaRecorder.addEventListener('stop', () => {
-          const blob = new Blob(chunks, { type: 'audio/mpeg' });
-
-          var formData = new FormData();
-          formData.append('file', blob, 'recording.mpeg');
-          formData.append('filename',"mis.mp3");
-          var xhr = new XMLHttpRequest();
-          var responseText;
-          xhr.open('POST', '/upload/', true);
-          document.getElementById('mission').value = "..";
-          var loadInterval= setInterval(function(){
-            document.getElementById('mission').value += ".";
-          },300)
-
-          xhr.onreadystatechange = function() {
-              if (xhr.readyState === 4 && xhr.status === 200) {
-                responseText = xhr.responseText;
-                clearInterval(loadInterval);
-                
-                var index=0;
-                document.getElementById('mission').value = "";
-                var interval = setInterval(function(){
-                  if(index<responseText.length){
-                    document.getElementById('mission').value +=responseText.charAt(index);
-                    index++; 
-                  }
-                  else
-                  {
-                    clearInterval(interval);
-                  }
-                },30)
-            }
-          };
-          xhr.send(formData);  
-      });
-      document.getElementById('mission-stop-recording').disabled = true;
-      document.getElementById('mission-start-recording').disabled = false;
-  };
-
-  document.getElementById('mission-start-recording').addEventListener('click', missionstartRecording);
-  document.getElementById('mission-stop-recording').addEventListener('click', missionstopRecording);
+  document.getElementById('start-recording').addEventListener('click', startRecording);
+  document.getElementById('stop-recording').addEventListener('click', stopRecording);
 </script>
 
 <script>
-document.getElementById('file-input-1').addEventListener('change', function() {
-    var fileInput = document.getElementById('file-input-1');
-    var file = fileInput.files[0];
-    var filename= fileInput.name+".mp3";
-    var formData = new FormData();
-    formData.append('file', file);
-    formData.append('filename', filename);
-    var xhr = new XMLHttpRequest();
-    var responseText;
-    xhr.open('POST', '/upload/', true);
-    document.getElementById('author').value = "..";
-    var loadInterval= setInterval(function(){
-      document.getElementById('author').value += ".";
-    },300)
+  document.getElementById('file-input').addEventListener('change', function() {
+      var fileInput = document.getElementById('file-input');
+      var file = fileInput.files[0];
+      var filename= fileInput.name+".mp3";
+      var formData = new FormData();
+      formData.append('file', file);
+      formData.append('filename', filename);
+      var xhr = new XMLHttpRequest();
+      var responseText;
+      xhr.open('POST', '/upload/', true);
+      document.getElementById('question').value = "..";
+      var loadInterval= setInterval(function(){
+        document.getElementById('question').value += ".";
+      },300)
 
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          responseText = xhr.responseText;
-          clearInterval(loadInterval);
-          
-          var index=0;
-          document.getElementById('author').value = "";
-          var interval = setInterval(function(){
-            if(index<responseText.length){
-              document.getElementById('author').value +=responseText.charAt(index);
-              index++; 
-            }
-            else
-            {
-              clearInterval(interval);
-            }
-          },30)
-      }
-    };
-    xhr.send(formData);    
-});
-document.getElementById('file-input-2').addEventListener('change', function() {
-    var fileInput = document.getElementById('file-input-2');
-    var file = fileInput.files[0];
-    var filename= fileInput.name+".mp3";
-    var formData = new FormData();
-    formData.append('file', file);
-    formData.append('filename', filename);
-    var xhr = new XMLHttpRequest();
-    var responseText;
-    xhr.open('POST', '/upload/', true);
-    document.getElementById('bio').value = "..";
-    var loadInterval= setInterval(function(){
-      document.getElementById('bio').value += ".";
-    },300)
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          responseText = xhr.responseText;
-          clearInterval(loadInterval);
-          
-          var index=0;
-          document.getElementById('bio').value = "";
-          var interval = setInterval(function(){
-            if(index<responseText.length){
-              document.getElementById('bio').value +=responseText.charAt(index);
-              index++; 
-            }
-            else
-            {
-              clearInterval(interval);
-            }
-          },30)
-      }
-    };
-    xhr.send(formData);    
-});
-document.getElementById('file-input-3').addEventListener('change', function() {
-    var fileInput = document.getElementById('file-input-3');
-    var file = fileInput.files[0];
-    var filename= fileInput.name+".mp3";
-    var formData = new FormData();
-    formData.append('file', file);
-    formData.append('filename', filename);
-    var xhr = new XMLHttpRequest();
-    var responseText;
-    xhr.open('POST', '/upload/', true);
-    document.getElementById('mission').value = "..";
-    var loadInterval= setInterval(function(){
-      document.getElementById('mission').value += ".";
-    },300)
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          responseText = xhr.responseText;
-          clearInterval(loadInterval);
-          
-          var index=0;
-          document.getElementById('mission').value = "";
-          var interval = setInterval(function(){
-            if(index<responseText.length){
-              document.getElementById('mission').value +=responseText.charAt(index);
-              index++; 
-            }
-            else
-            {
-              clearInterval(interval);
-            }
-          },30)
-      }
-    };
-    xhr.send(formData);    
-});
+      xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            responseText = xhr.responseText;
+            clearInterval(loadInterval);
+            
+            var index=0;
+            document.getElementById('question').value = "";
+            var interval = setInterval(function(){
+              if(index<responseText.length){
+                document.getElementById('question').value +=responseText.charAt(index);
+                index++; 
+              }
+              else
+              {
+                clearInterval(interval);
+              }
+            },30)
+        }
+      };
+      xhr.send(formData);    
+  });
 </script>
 {% endblock %}
